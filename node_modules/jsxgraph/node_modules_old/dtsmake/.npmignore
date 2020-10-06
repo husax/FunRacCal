@@ -1,0 +1,13 @@
+src
+typings
+tmp
+tsconfig.json
+tsd.json
+TODO.md
+gulpfile.ts
+sample
+example
+test
+.tmp
+.settings
+.travis.yml
