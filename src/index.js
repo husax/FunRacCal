@@ -1,10 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
 import { addStyles, EditableMathField } from "react-mathquill";
 import $ from "jquery";
 import JXGBoard from "jsxgraph-react-js";
-//import Alert from "react-bootstrap/Alert";
 
 import Button from "react-bootstrap/Button";
 import Container from "react-bootstrap/Container";
@@ -15,13 +14,19 @@ import Nav from "react-bootstrap/Nav";
 import NavDropdown from "react-bootstrap/Navdropdown";
 import Image from "react-bootstrap/Image";
 import InputGroup from "react-bootstrap/InputGroup";
+import Modal from "react-bootstrap/Modal";
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import TeXToLinealPyt from "./TeXToLineal";
+//import InFijaAPolaca from "./InfAPolInvCls";
 
 addStyles();
 
 let funid = "";
+
+//let infpol = new InFijaAPolaca("2+3*4");
+//let error = infpol.InfAPol();
+//console.log(infpol.postFija);
 
 function filtro(e) {
   const teclasEsp = [
@@ -68,26 +73,24 @@ class BarraNav extends React.Component {
   }
 }
 
-class Cabeza extends React.Component {
-  render() {
-    return (
-      <Container fluid>
-        <Row bg="light">
-          <Col className="align-self-center cinves-color bg-light font-italic">
-            <h2>CalcVisual Web</h2>
-          </Col>
-          <Col md={{ span: 4, offset: 4 }}>
-            <Image src="./logo.jpg" />
-          </Col>
-        </Row>
-        <Row>
-          <Col>
-            <BarraNav />
-          </Col>
-        </Row>
-      </Container>
-    );
-  }
+function Cabeza() {
+  return (
+    <Container fluid>
+      <Row className="bg-light">
+        <Col className="align-self-center cinves-color font-italic">
+          <h2>CalcVisual Web</h2>
+        </Col>
+        <Col md={{ span: 4, offset: 4 }}>
+          <Image src="./logo.jpg" />
+        </Col>
+      </Row>
+      <Row>
+        <Col>
+          <BarraNav />
+        </Col>
+      </Row>
+    </Container>
+  );
 }
 
 let Grafica = (brd, param) => {
@@ -102,38 +105,32 @@ let Grafica = (brd, param) => {
   funid = fun1.id;
 };
 
-class CajaMath extends React.Component {
-  render() {
-    return (
-      <InputGroup size="lg" className="mb-3">
-        <InputGroup.Prepend>
-          <InputGroup.Text id="basic-addon1">P(x) =</InputGroup.Text>
-        </InputGroup.Prepend>
-        <EditableMathField // este se importó de mathQuill
-          latex={this.props.latex}
-          config={{
-            charsThatBreakOutOfSupSub: "+-()",
-            autoCommands: "pi sqrt",
-          }}
-          onChange={(mathField) => {
-            let latex = mathField.latex();
-            this.props.onChange(latex);
-          }}
-          onKeyDown={(event) => filtro(event)}
-        />
-        <InputGroup.Append>
-          <Button
-            variant="success"
-            size="lg"
-            block
-            onClick={this.props.onClick}
-          >
-            Obtener Propiedades
-          </Button>
-        </InputGroup.Append>
-      </InputGroup>
-    );
-  }
+//class CajaMath extends React.Component {
+//  render() {
+function CajaMath(props) {
+  return (
+    <InputGroup size="lg" className="mb-3">
+      <InputGroup.Prepend>
+        <InputGroup.Text id="basic-addon1">P(x) =</InputGroup.Text>
+      </InputGroup.Prepend>
+      <EditableMathField // este se importó de mathQuill
+        latex={props.latex}
+        config={{
+          charsThatBreakOutOfSupSub: "+-()",
+          autoCommands: "pi sqrt",
+        }}
+        onChange={(mathField) => {
+          props.onChange(mathField.latex());
+        }}
+        onKeyDown={(event) => filtro(event)}
+      />
+      <InputGroup.Append>
+        <Button variant="success" size="lg" block onClick={props.onClick}>
+          Obtener Propiedades
+        </Button>
+      </InputGroup.Append>
+    </InputGroup>
+  );
 }
 
 function creaFun(lat) {
@@ -150,10 +147,12 @@ class Cuerpo extends React.Component {
       latexFun: props.latexIni,
       calculoSympy: {},
       funjs: creaFun(props.latexIni),
+      show: false,
+      mensaje: "",
     };
     this.handleClick = this.handleClick.bind(this);
-    //this.handleParam = this.handleParam.bind(this);
     this.handleChange = this.handleChange.bind(this);
+    this.handleClose = this.handleClose.bind(this);
   }
 
   handleChange(latex) {
@@ -161,8 +160,33 @@ class Cuerpo extends React.Component {
   }
 
   handleClick() {
+    console.log(this.state.latexFun);
     let cad = TeXToLinealPyt.TexToPyt(this.state.latexFun);
     console.log(cad);
+    let reg = /\*\*\(\)/g;
+    if (cad.match(reg) !== null) {
+      this.setState({
+        show: true,
+        mensaje: "Hay una casilla de exponente vacia",
+      });
+      return;
+    }
+    reg = /\/\(\)/;
+    if (cad.match(reg) !== null) {
+      this.setState({
+        show: true,
+        mensaje: "Hay un cociente indicado pero falta el denominador",
+      });
+      return;
+    }
+    reg = /\(\)\//;
+    if (cad.match(reg) !== null) {
+      this.setState({
+        show: true,
+        mensaje: "Hay un cociente indicado pero falta el numerador",
+      });
+      return;
+    }
     $.ajax({
       type: "GET",
       url: "http://127.0.0.1:5000/api/v1/polynomial/properties/" + cad,
@@ -174,9 +198,9 @@ class Cuerpo extends React.Component {
     this.setState({ funjs: creaFun(this.state.latexFun) });
   }
 
-  //handleParam(f) {
-  //  return { func: f };
-  //}
+  handleClose() {
+    this.setState({ show: false });
+  }
 
   render() {
     return (
@@ -188,6 +212,22 @@ class Cuerpo extends React.Component {
               onClick={this.handleClick}
               onChange={this.handleChange}
             />
+            <Modal
+              show={this.state.show}
+              onHide={this.handleClose}
+              backdrop="static"
+              animation={true}
+            >
+              <Modal.Header className="bg-danger" closeButton>
+                <Modal.Title>Expresión errónea </Modal.Title>
+              </Modal.Header>
+              <Modal.Body>{this.state.mensaje}</Modal.Body>
+              <Modal.Footer>
+                <Button variant="danger" onClick={this.handleClose}>
+                  Cerrar
+                </Button>
+              </Modal.Footer>
+            </Modal>
           </Col>
           <Col sm={{ order: "last" }}>
             <JXGBoard
