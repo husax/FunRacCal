@@ -1,4 +1,6 @@
 import { Fraccion, Lineal, decimal } from "./Fracciones";
+import Polin from "./Polinomio";
+import { FunRacional } from "./Polinomio";
 // const Cinves = { DME: {} };
 class ParCadInt {
   constructor(c, j) {
@@ -586,6 +588,120 @@ class InfijaAPolaca {
     }
     this.numError = 0;
     return pilaCalc.pop();
+  }
+
+  // Evalua la expresión dada en notación polaca inversa en el parámetro: postfija
+  // con los valores que tengan al momento las variables o parámetros identificadas como tales
+  // almacenadas en el parámetro: variables
+  // postFija: un arreglo de pares de tipo ParCadInt
+  // variables: un objeto JSON, donde la propiedad es el nombre de la variable y su valor es
+  // el valor de la propiedad.
+  // entrega una funcion polinomial, o una funcion racional según sea el caso
+  // el número de error lo entrega en la propiedad numError
+  EvalFuncRac(postFija) {
+    let numero;
+    let oper1;
+    let oper2;
+    let par;
+    let nomvar = Object.getOwnPropertyNames(this.variables);
+    let variable = nomvar.length > 2 ? nomvar[2] : "";
+    const pilaCalc = [];
+    for (let i = 0; i < postFija.length; i++) {
+      let pol;
+      par = postFija[i];
+      switch (par.jerar) {
+        case 2: // operadores + o - binarios
+        case 4: // operadores * o /
+          if (pilaCalc.length < 2) {
+            this.numError = -20; // error: se perdio un operando
+            return undefined;
+          }
+          oper1 = pilaCalc.pop();
+          oper2 = pilaCalc.pop();
+          pilaCalc.push(InfijaAPolaca.operaBinFun(oper1, oper2, par.cad));
+          break;
+        case 5: // operador ^
+          if (pilaCalc.length < 2) {
+            this.numError = -20; // error: se perdio un operando
+            return undefined;
+          }
+          oper1 = pilaCalc.pop();
+          if (!oper1.esConstante) {
+            this.num = -31; // el exponente debe ser una constante
+            return undefined;
+          }
+          oper2 = pilaCalc.pop();
+          pilaCalc.push(InfijaAPolaca.operaBinFun(oper1, oper2, par.cad));
+          break;
+        case 7: // operador unario
+          if (pilaCalc.length === 0) {
+            this.numError = -20; // error: se perdio un operando
+            return undefined;
+          }
+          oper1 = pilaCalc.pop();
+          pilaCalc.push(oper1.ProductoPorN(-1));
+          break;
+        case 10: // número o variable
+          numero = parseFloat(par.cad);
+          if (Number.isNaN(numero)) {
+            // es una variable
+            if (variable === "") {
+              variable = par.cad;
+            } else if (variable !== par.cad) {
+              this.numError = -30; // error: hay más de una variable en la expresión.
+              return undefined;
+            }
+            pol = Polin.Monomio(1, 1, variable);
+          } else {
+            pol = Polin.Monomio(numero, 0, variable);
+          }
+          pilaCalc.push(pol);
+          break;
+        default:
+          break;
+      }
+    }
+    if (pilaCalc.length > 1) {
+      this.numError = -21; // error: sobraron operandos al evaluar!!!
+      return undefined;
+    }
+    this.numError = 0;
+    return pilaCalc.pop();
+  }
+
+  static operaBinFun(opd1, opd2, operador) {
+    switch (operador) {
+      case "+": // falta el caso funRac + Polin
+        return opd2.Suma(opd1);
+      // break;
+      case "-": // falta el caso funRac - Polin
+        return opd2.Resta(opd1);
+      // break;
+      case "*":
+        return opd2.Producto(opd1);
+      // break;
+      case "/":
+        if (opd1.esConstante) {
+          return opd2.ProductoPorN(1 / opd1.coefs[0]);
+        }
+        if (opd2.esPolinomio && opd1.esPolinomio) {
+          return new FunRacional(opd2, opd1);
+        }
+        if (!opd2.esPolinomio && opd1.esPolinomio) {
+          return opd2.Cociente(new FunRacional(opd1));
+        }
+        if (opd2.esPolinomio && !opd1.esPolinomio) {
+          let r = new FunRacional(opd2);
+          return r.Cociente(opd1);
+        }
+        return opd2.Cociente(opd1);
+      // break;
+      case "^":
+        return opd2.Potencia(opd1.coefs[0]);
+      // break;
+      default:
+        break;
+    }
   }
 
   // Evalua la expresión en notación polaca inversa dada en el parámetro: postfija

@@ -46,7 +46,7 @@ class TeXToLinealPyt {
     return cad.replace(/ /g, "");
   }
 
-  static TexToPyt(cad) {
+  static TexToPyt(cad, sgnPot) {
     let cadpyt = TeXToLinealPyt.fracToDiag(cad);
     cadpyt = TeXToLinealPyt.llavesAParen(cadpyt);
     cadpyt = TeXToLinealPyt.quitaEtiqParen(cadpyt);
@@ -55,7 +55,9 @@ class TeXToLinealPyt {
     cadpyt = TeXToLinealPyt.insertaAster(cadpyt);
     cadpyt = TeXToLinealPyt.insertaAster(cadpyt); // requiere doble paso para casos como )x(
     cadpyt = TeXToLinealPyt.quitaBloq(cadpyt);
-    cadpyt = TeXToLinealPyt.signoPot(cadpyt);
+    if (sgnPot) {
+      cadpyt = TeXToLinealPyt.signoPot(cadpyt);
+    }
     cadpyt = TeXToLinealPyt.quitaSpace(cadpyt);
     return cadpyt;
   }

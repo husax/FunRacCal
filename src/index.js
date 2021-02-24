@@ -18,11 +18,12 @@ import Modal from "react-bootstrap/Modal";
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import TeXToLinealPyt from "./TeXToLineal";
-//import InFijaAPolaca from "./InfAPolInvCls";
+import InfijaAPolaca from "./InfAPolInvCls";
 
 addStyles();
 
 let funid = "";
+let funRac;
 
 //let infpol = new InFijaAPolaca("2+3*4");
 //let error = infpol.InfAPol();
@@ -134,10 +135,26 @@ function CajaMath(props) {
 }
 
 function creaFun(lat) {
-  let cad = TeXToLinealPyt.TexToPyt(lat);
+  let cad = TeXToLinealPyt.TexToPyt(lat, true);
   let creafun = `(function (x) { return ${cad}; })`;
   let F = eval(creafun);
   return F;
+}
+
+function ChecaHuecos(cad) {
+  let reg = /\*\*\(\)/g;
+  if (cad.match(reg) !== null) {
+    return "Hay una casilla de exponente vacia";
+  }
+  reg = /\/\(\)/;
+  if (cad.match(reg) !== null) {
+    return "Hay un cociente indicado pero falta el denominador";
+  }
+  reg = /\(\)\//;
+  if (cad.match(reg) !== null) {
+    return "Hay un cociente indicado pero falta el numerador";
+  }
+  return "";
 }
 
 class Cuerpo extends React.Component {
@@ -161,41 +178,43 @@ class Cuerpo extends React.Component {
 
   handleClick() {
     console.log(this.state.latexFun);
-    let cad = TeXToLinealPyt.TexToPyt(this.state.latexFun);
-    console.log(cad);
-    let reg = /\*\*\(\)/g;
-    if (cad.match(reg) !== null) {
+    let cadpyt = TeXToLinealPyt.TexToPyt(this.state.latexFun, true);
+    let cad = TeXToLinealPyt.TexToPyt(this.state.latexFun, false);
+    let cadFunRac;
+    //console.log(cadpyt);
+    let msg = ChecaHuecos(cadpyt);
+    if (msg !== "") {
       this.setState({
         show: true,
-        mensaje: "Hay una casilla de exponente vacia",
+        mensaje: msg,
       });
       return;
     }
-    reg = /\/\(\)/;
-    if (cad.match(reg) !== null) {
+    let procesaInfija = new InfijaAPolaca(cad);
+    procesaInfija.InfAPol();
+    if (procesaInfija.numError !== 0) {
       this.setState({
         show: true,
-        mensaje: "Hay un cociente indicado pero falta el denominador",
+        mensaje: InfijaAPolaca.errores[-procesaInfija.numError],
       });
       return;
     }
-    reg = /\(\)\//;
-    if (cad.match(reg) !== null) {
-      this.setState({
-        show: true,
-        mensaje: "Hay un cociente indicado pero falta el numerador",
-      });
-      return;
+    funRac = procesaInfija.EvalFuncRac(procesaInfija.postFija);
+    if (funRac.esPolinomio) {
+      cadFunRac = funRac.toString();
+    } else {
+      cadFunRac = funRac.numP.toString() + "," + funRac.denomP.toString();
     }
     $.ajax({
       type: "GET",
-      url: "http://127.0.0.1:5000/api/v1/polynomial/properties/" + cad,
+      url: "http://127.0.0.1:5000/api/v1/polynomial/properties/" + cadFunRac, // cadpyt,
       success: (data) => {
         console.log(data);
         this.setState({ calculoSympy: data });
       },
     });
-    this.setState({ funjs: creaFun(this.state.latexFun) });
+
+    this.setState({ funjs: (x) => funRac.Evalua(x) });
   }
 
   handleClose() {
