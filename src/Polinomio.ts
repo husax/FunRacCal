@@ -255,6 +255,7 @@ class FunRacional extends Polinomio {
     //}
     return this.numP.Evalua(x)/this.denomP.Evalua(x);
   }
+  
   toString() : string {
     if (this.esPolinomio) {
       return this.numP.toString();
