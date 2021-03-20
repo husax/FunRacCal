@@ -3,7 +3,7 @@ import ReactDOM from "react-dom";
 import "./index.css";
 import { addStyles, EditableMathField } from "react-mathquill";
 import $ from "jquery";
-import JXGBoard from "jsxgraph-react-js";
+import JXGBoard from './jsxboard-react';
 
 import Button from "react-bootstrap/Button";
 import Container from "react-bootstrap/Container";
@@ -164,6 +164,7 @@ class Cuerpo extends React.Component {
       latexFun: props.latexIni,
       calculoSympy: {},
       funjs: creaFun(props.latexIni),
+      boardAttibs: props.boardAttibs,
       show: false,
       mensaje: "",
     };
@@ -215,6 +216,7 @@ class Cuerpo extends React.Component {
     });
 
     this.setState({ funjs: (x) => funRac.Evalua(x) });
+    this.setState({boardAttibs: {boundingbox: [-10, 100, 10, -100]}});
   }
 
   handleClose() {
@@ -251,15 +253,13 @@ class Cuerpo extends React.Component {
           <Col sm={{ order: "last" }}>
             <JXGBoard
               logic={Grafica}
-              boardAttributes={{
-                axis: true,
-                boundingbox: [-10, 10, 10, -10],
-              }}
+              boardAttributes={ this.state.boardAttibs}
               param={{ func: this.state.funjs }}
               style={{
                 width: "maxContent",
                 height: "50em",
                 border: "3px solid green",
+                borderRadius: "8px",
               }}
             />
           </Col>
@@ -274,7 +274,11 @@ class Pagina extends React.Component {
     return (
       <div>
         <Cabeza />
-        <Cuerpo latexIni="\frac{x^3-3x+1}{x^2-4}" />
+        <Cuerpo latexIni="\frac{x^3-3x+1}{x^2-4}" 
+            boardAttibs={{
+                axis: true,
+                boundingbox: [-10, 10, 10, -10],
+            }} />
       </div>
     );
   }
