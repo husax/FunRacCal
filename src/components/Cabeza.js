@@ -4,11 +4,14 @@ import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Image from "react-bootstrap/Image";
 import BarraNav from './BarraNav';
+//import {DatoContexto} from './Cuerpo';
 import logoImg from '../img/logo.jpg';
 
 import "bootstrap/dist/css/bootstrap.min.css";
 
+
 const Cabeza = () => {
+  //const dato= useContext(DatoContexto)
   return (
     <Container fluid>
       <Row className="bg-light">

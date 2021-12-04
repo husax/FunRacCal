@@ -4,7 +4,7 @@ import JXG from 'jsxgraph';
 import 'jsxgraph/distrib/jsxgraph.css';
 import _ from 'lodash';
 
-export  default class JXGBoard extends React.Component {
+export default class JXGBoard extends React.Component {
   constructor(props) {
     super(props);
     this.state= {
@@ -37,10 +37,11 @@ export  default class JXGBoard extends React.Component {
       this.state.board.setBoundingBox(this.props.boardAttributes.boundingbox);
     }
   }
+  
   render () {
     return (
       // eslint-disable-next-line react/style-prop-object
-      <div id={this.state._id} className='jsxbox' style={this.props.style}></div>
+      <div id={this.state._id} className='jxgbox' style={this.props.style}></div>
     )
   }
 }

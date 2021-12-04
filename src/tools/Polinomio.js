@@ -13,32 +13,44 @@ function ACadenaSinCeros(n, dig) {
     return cad;
 }
 class Polinomio {
+    #coefs;
+    #var;
+    #raices;
     constructor(arr, v = "x") {
-        this._var = v;
-        this._raices = [];
+        this.#var = v;
+        this.#raices = [];
         let gr = arr.length - 1;
         while (arr[gr] === 0) {
             gr--;
         }
         if (gr < 0) {
-            this.coefs = [0];
+            this.#coefs = [0];
         }
         else {
-            this.coefs = arr.slice(0, ++gr);
+            this.#coefs = arr.slice(0, ++gr);
         }
     }
     // propiedades no modificables
     get grado() {
-        return this.coefs.length - 1;
+        return this.#coefs.length - 1;
     }
-    get variable() {
-        return this._var;
+    get var() {
+        return this.#var;
     }
-    set variable(v) {
-        this._var = v;
+    set var(v) {
+        this.#var = v;
+    }
+    get coefs() {
+        return this.#coefs.slice();
+    }
+    get raices() {
+        return this.#raices.slice();
+    }
+    set raices(raicesnv) {
+        this.#raices = raicesnv.slice();
     }
     get esMonico() {
-        return this.coefs[this.grado] === 1 ? true : false;
+        return this.#coefs[this.grado] === 1 ? true : false;
     }
     get esPolinomio() {
         return true;
@@ -59,49 +71,47 @@ class Polinomio {
     // suma del polinomio que llama con otro polinomio q
     Suma(q) {
         if (this.grado >= q.grado) {
-            let s = this.coefs.slice(0);
-            for (let i = 0; i < q.coefs.length; i++) {
-                s[i] += q.coefs[i];
+            let s = this.coefs;
+            for (let i = 0; i < q.#coefs.length; i++) {
+                s[i] += q.#coefs[i];
             }
-            return new Polinomio(s, this.variable);
+            return new Polinomio(s, this.var);
         }
-        else {
-            let s = q.coefs.slice(0);
-            for (let i = 0; i < this.coefs.length; i++) {
-                s[i] += this.coefs[i];
-            }
-            return new Polinomio(s, this.variable);
+        let s = q.coefs;
+        for (let i = 0; i < this.#coefs.length; i++) {
+            s[i] += this.#coefs[i];
         }
+        return new Polinomio(s, this.var);
     }
     Producto(q) {
         let s = new Array(this.grado + q.grado + 1);
         s.fill(0);
         for (let i = 0; i <= this.grado; i++) {
             for (let j = 0; j <= q.grado; j++) {
-                s[i + j] += this.coefs[i] * q.coefs[j];
+                s[i + j] += this.#coefs[i] * q.#coefs[j];
             }
         }
-        return new Polinomio(s, this.variable);
+        return new Polinomio(s, this.var);
     }
     ProductoPorN(n) {
-        let s = this.coefs.slice(0);
+        let s = this.coefs;
         for (let i = 0; i < s.length; i++) {
             s[i] *= n;
         }
-        return new Polinomio(s, this.variable);
+        return new Polinomio(s, this.var);
     }
     InversoAd() {
-        let s = this.coefs.slice(0);
+        let s = this.coefs;
         for (let i = 0; i < s.length; i++) {
             s[i] *= -1;
         }
-        return new Polinomio(s, this.variable);
+        return new Polinomio(s, this.var);
     }
     Resta(q) {
         return this.Suma(q.InversoAd());
     }
     Copia() {
-        return new Polinomio(this.coefs, this.variable);
+        return new Polinomio(this.#coefs, this.var);
     }
     Potencia(n) {
         let s = this.Copia();
@@ -109,40 +119,33 @@ class Polinomio {
             for (let i = 1; i < n; i++) {
                 s = s.Producto(this);
             }
-            return s;
         }
-        else {
-            return s;
-        }
+        return s;
     }
     Cociente(q) {
         if (this.grado < q.grado) {
-            return new Polinomio([0], this.variable);
+            return new Polinomio([0], this.var);
         }
-        else {
-            let r = this.Copia();
-            let grs = r.grado - q.grado;
-            let coc = Polinomio.Monomio(r.coefs[r.grado] / q.coefs[q.grado], grs, r.variable);
-            r = r.Resta(coc.Producto(q));
-            return coc.Suma(r.Cociente(q));
-        }
+        let r = this.Copia();
+        let grs = r.grado - q.grado;
+        let coc = Polinomio.Monomio(r.coefs[r.grado] / q.coefs[q.grado], grs, r.var);
+        r = r.Resta(coc.Producto(q));
+        return coc.Suma(r.Cociente(q));
     }
     Residuo(q) {
         if (this.grado < q.grado) {
             return this.Copia(); // en este caso el residuo es el dividendo
         }
-        else {
-            let r = this.Copia();
-            let grs = r.grado - q.grado;
-            let cm = Polinomio.Monomio(r.coefs[r.grado] / q.coefs[q.grado], grs);
-            r = r.Resta(cm.Producto(q));
-            return r.Residuo(q);
-        }
+        let r = this.Copia();
+        let grs = r.grado - q.grado;
+        let cm = Polinomio.Monomio(r.coefs[r.grado] / q.coefs[q.grado], grs);
+        r = r.Resta(cm.Producto(q));
+        return r.Residuo(q);
     }
     Evalua(x) {
         let pdeX = 0;
         for (let i = this.grado; i >= 0; i--) {
-            pdeX = pdeX * x + this.coefs[i];
+            pdeX = pdeX * x + this.#coefs[i];
         }
         return pdeX;
     }
@@ -151,7 +154,7 @@ class Polinomio {
         let signo = "";
         let c;
         for (let i = this.grado; i >= 0; i--) {
-            c = this.coefs[i];
+            c = this.#coefs[i];
             if (c !== 0) {
                 signo = c > 0 ? "+" : "-";
                 c = Math.abs(c);
@@ -160,7 +163,7 @@ class Polinomio {
                     cad += ACadenaSinCeros(c, 4);
                 }
                 else {
-                    cad += c === 1 ? this.variable : ACadenaSinCeros(c, 5) + "*" + this.variable;
+                    cad += c === 1 ? this.var : ACadenaSinCeros(c, 5) + "*" + this.var;
                     cad += i > 1 ? "**" + i.toString() : "";
                 }
             }
@@ -176,27 +179,40 @@ class Polinomio {
     Derivada() {
         let dif = [];
         for (let i = 0; i < this.grado; i++) {
-            dif[i] = (i + 1) * this.coefs[i + 1];
+            dif[i] = (i + 1) * this.#coefs[i + 1];
         }
-        return new Polinomio(dif, this.variable);
+        return new Polinomio(dif, this.var);
     }
 }
 class FunRacional extends Polinomio {
+    #denomP;
     constructor(nP, dP = Polinomio.Monomio(1, 0)) {
-        super(nP.coefs, nP.variable);
-        this.denomP = dP.Copia();
-        this.denomP.variable = this.variable;
+        super(nP.coefs, nP.var);
+        this.#denomP = dP.Copia();
+        this.#denomP.var = this.var;
     }
     get numP() {
         return super.Copia();
     }
+    get denomP() {
+        return this.#denomP.Copia();
+    }
+    get PuedeVerseComoPolinomio() {
+        return this.denomP.esConstante;
+    }
     get esPolinomio() {
-        return this.denomP.esConstante && this.denomP.esMonico;
+        return false;
     }
     Suma(r) {
         let denc = this.denomP.Producto(r.denomP);
         let num = this.numP.Producto(r.denomP);
         return new FunRacional(num.Suma(r.numP.Producto(this.denomP)), denc);
+    }
+    InversoAd() {
+        return new FunRacional(this.numP.InversoAd(), this.denomP);
+    }
+    Resta(r) {
+        return this.Suma(r.InversoAd());
     }
     Producto(r) {
         return new FunRacional(this.numP.Producto(r.numP), this.denomP.Producto(r.denomP));
@@ -209,6 +225,11 @@ class FunRacional extends Polinomio {
     }
     Potencia(n) {
         return new FunRacional(this.numP.Potencia(n), this.denomP.Potencia(n));
+    }
+    Derivada() {
+        let numDer = this.numP.Derivada().Producto(this.denomP);
+        numDer = numDer.Resta(this.numP.Producto(this.denomP.Derivada()));
+        return new FunRacional(numDer, this.denomP.Producto(this.denomP));
     }
     Evalua(x) {
         //let num= this.numP.Evalua(x);

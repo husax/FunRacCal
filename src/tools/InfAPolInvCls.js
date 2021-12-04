@@ -676,13 +676,40 @@ class InfijaAPolaca {
 
   static operaBinFun(opd1, opd2, operador) {
     switch (operador) {
-      case "+": // falta el caso funRac + Polin
+      case "+": 
+        if (!opd2.esPolinomio && !opd1.esPolinomio) {
+          return opd2.Suma(opd1);          
+        }
+        if (!opd2.esPolinomio && opd1.esPolinomio) {
+          return opd2.Suma(new FunRacional(opd1));
+        }
+        if (opd2.esPolinomio && !opd1.esPolinomio) {
+          return opd1.Suma(new FunRacional(opd2));
+        }   
         return opd2.Suma(opd1);
       // break;
       case "-": // falta el caso funRac - Polin
-        return opd2.Resta(opd1);
+      if (!opd2.esPolinomio && !opd1.esPolinomio) {
+        return opd2.Resta(opd1);          
+      }
+      if (!opd2.esPolinomio && opd1.esPolinomio) {
+        return opd2.Resta(new FunRacional(opd1));
+      }
+      if (opd2.esPolinomio && !opd1.esPolinomio) {
+        return (new FunRacional(opd2)).Resta(opd1);
+      }
+      return opd2.Resta(opd1);
       // break;
       case "*":
+        if (!opd2.esPolinomio && !opd1.esPolinomio) {
+          return opd2.Producto(opd1);          
+        }
+        if (!opd2.esPolinomio && opd1.esPolinomio) {
+          return opd2.Producto(new FunRacional(opd1));
+        }
+        if (opd2.esPolinomio && !opd1.esPolinomio) {
+          return opd1.Producto(new FunRacional(opd2));
+        }
         return opd2.Producto(opd1);
       // break;
       case "/":
@@ -696,8 +723,7 @@ class InfijaAPolaca {
           return opd2.Cociente(new FunRacional(opd1));
         }
         if (opd2.esPolinomio && !opd1.esPolinomio) {
-          let r = new FunRacional(opd2);
-          return r.Cociente(opd1);
+          return (new FunRacional(opd2)).Cociente(opd1);
         }
         return opd2.Cociente(opd1);
       // break;
@@ -744,6 +770,7 @@ class InfijaAPolaca {
           pilaCalc.push(oper1.invAd()); //
           break;
         case 10: // número
+        // eslint-disable-next-line
           numero = parseInt(par.cad);
           if (Number.isNaN(numero)) {
             this.numError = -22; // error: se perdio un operando
@@ -899,6 +926,7 @@ class InfijaAPolaca {
           if (Number.isNaN(numero)) {
             pilaCalc.push(new Lineal(new Fraccion(1, 1), new Fraccion(0, 1)));
           } else {
+            // eslint-disable-next-line
             let numInt = Number.parseInt(par.cad);
             if (numInt === numero) {
               pilaCalc.push(new Fraccion(numInt));

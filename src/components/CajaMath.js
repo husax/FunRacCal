@@ -1,5 +1,5 @@
 import React from 'react';
-import { addStyles, EditableMathField } from "react-mathquill";
+import { addStyles, EditableMathField, StaticMathField } from "react-mathquill";
 import InputGroup from "react-bootstrap/InputGroup";
 import Button from "react-bootstrap/Button";
 
@@ -29,9 +29,7 @@ function filtro(e) {
 const CajaMath=  (props) => {
   return (
     <InputGroup size="lg" className="mb-3">
-      <InputGroup.Prepend>
-        <InputGroup.Text id="basic-addon1">P(x) =</InputGroup.Text>
-      </InputGroup.Prepend>
+      <InputGroup.Text id="basic-addon1">P(x) =</InputGroup.Text>
       <EditableMathField // este se importó de mathQuill
         latex={props.latex}
         config={{
@@ -43,13 +41,16 @@ const CajaMath=  (props) => {
         }}
         onKeyDown={(event) => filtro(event)}
       />
-      <InputGroup.Append>
-        <Button variant="success" size="lg" block onClick={props.onClick}>
-          Obtener Propiedades
+        <Button variant="success" size="lg" onClick={props.onClick}>
+          Aceptar
         </Button>
-      </InputGroup.Append>
     </InputGroup>
   );
 }
 
+const CajaMathFija = (props) => {
+  return ( <StaticMathField>{props.latex}</StaticMathField> );
+}
+
 export default CajaMath;
+export { CajaMathFija }

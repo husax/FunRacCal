@@ -176,6 +176,7 @@ class Decimal extends Fraccion {
     for (let i = 0; i < partes[1].length; i++) {
       d *= 10;
     }
+    // eslint-disable-next-line
     return { num: Number.parseInt(ncad), den: d };
   }
 

@@ -3,32 +3,34 @@ import React from 'react';
 // comppnentes
 import CajaMath from './CajaMath';
 import JXGBoard from './Jsxboard-react';
+import MsgModal from './MsgModal';
+
 
 // captura y procesamiento de objetos matemáticos
 import TeXToLinealPyt from "../tools/TeXToLineal";
 import InfijaAPolaca from "../tools/InfAPolInvCls";
-import {ArrNum}  from "../tools/ConvierteData";
+import {ArrNum, ArrNumToString, cadBul, calcExtremos}  from "../tools/ConvierteData";
+import { GraficaNueva, GraficaRaices } from '../tools/TrazosJSXGraph';
 import $ from "jquery";
 
 // componentes bootstrap
-import Button from "react-bootstrap/Button";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
-import Modal from "react-bootstrap/Modal";
 
 import "bootstrap/dist/css/bootstrap.min.css";
+import Acordeon from './Acordeon';
 
 // variables de trabajo
-let funid = "";
 let funRac= null;
-
+InfijaAPolaca.IniciaErrores();
+/*
 const  creaFun= (lat) => {
   let cad = TeXToLinealPyt.TexToPyt(lat, true);
   let creafun = `(function (x) { return ${cad}; })`;
   let F = eval(creafun);
   return F;
-}
+} */
 
 const ChecaHuecos= (cad) => {
   let reg = /\*\*\(\)/g;
@@ -46,18 +48,29 @@ const ChecaHuecos= (cad) => {
   return "";
 }
 
-const Grafica = (brd, param) => {
-  if (funid !== "") {
-    brd.removeObject(funid, false);
-  }
-  let fun1 = brd.create("functiongraph", [param.func], {
-    strokewidth: 2,
-    name: "f",
-    strokecolor: "green",
-  });
-  funid = fun1.id;
-};
 
+//const DatoContexto = React.createContext("algo");
+
+const elem=[
+  {
+    uuid: 'k0',
+    textoBtn: 'Raices',
+    contenido: '',
+    expanded: false,
+  },
+  {
+    uuid: 'k1',
+    textoBtn: '1ª derivada',
+    contenido: '',
+    expanded: false,
+  },
+  {
+    uuid: 'k2',
+    textoBtn: '2ª derivada',
+    contenido: '',
+    expanded: false,
+  }
+];
 
 class Cuerpo extends React.Component {
   constructor(props) {
@@ -65,18 +78,42 @@ class Cuerpo extends React.Component {
     this.state = {
       latexFun: props.latexIni,
       calculoSympy: {},
-      funjs: creaFun(props.latexIni),
-      boardAttibs: props.boardAttibs,
+      inicio: true,
+      boardAttribs: props.boardAttribs,
       show: false,
       mensaje: "",
+      grafica: props.grafica,
+      param: props.param,
     };
     this.handleClick = this.handleClick.bind(this);
     this.handleChange = this.handleChange.bind(this);
+    this.handleChangeAc = this.handleChangeAc.bind(this);
     this.handleClose = this.handleClose.bind(this);
   }
 
+  //static contextType = DatoContexto;
+
   handleChange(latex) {
-    this.setState({ latexFun: latex });
+    this.setState({ latexFun: latex,
+                    inicio: true    
+    });
+  }
+
+  handleChangeAc(item) {
+    console.log('si switchea');
+    console.log(item);
+    if (item[0] === 'k0' && this.state.calculoSympy.hasOwnProperty('rfun') ) {
+      this.setState({
+        inicio: false, 
+        grafica: GraficaRaices,
+        param: { func: (x) => funRac.Evalua(x),
+          funcAnt: this.state.param.funcAnt, 
+          raices: this.state.calculoSympy.rfun,
+          raicesAnt: this.state.param.raicesAnt, 
+        }
+      });
+
+    }
   }
 
   handleClick() {
@@ -84,7 +121,7 @@ class Cuerpo extends React.Component {
     let cadpyt = TeXToLinealPyt.TexToPyt(this.state.latexFun, true);
     let cad = TeXToLinealPyt.TexToPyt(this.state.latexFun, false);
     let cadFunRac;
-    //console.log(cadpyt);
+    let ventanaY;
     let msg = ChecaHuecos(cadpyt);
     if (msg !== "") {
       this.setState({
@@ -114,8 +151,17 @@ class Cuerpo extends React.Component {
         url: "http://127.0.0.1:5000/api/v1/polynomial/properties/" + cadFunRac,
         success: (data) => {
           console.log(data);
+          data.racional= cadBul(data.racional);
+          data.rfun= ArrNum(data.raices.rfun);
+          data.rder1= ArrNum(data.raices.rder1);
+          data.rder2= ArrNum(data.raices.rder2);
+          if (data.racional) {
+            data.remov= ArrNum(data.remov);  
+          }
+          data.ventanaX= ArrNum(data.ventanaX);
+          console.log(data);
           this.setState({ calculoSympy: data });
-          res(ArrNum(this.state.calculoSympy.ventanaX));
+          res(this.state.calculoSympy.ventanaX);
         },
         error: (xhr) => {
           console.log(`Ocurrio el error ${xhr.status} ${xhr.statusText}`);
@@ -123,8 +169,16 @@ class Cuerpo extends React.Component {
       });
     });
     miPromesa.then((arr) => {
-      this.setState({ funjs: (x) => funRac.Evalua(x) });
-      this.setState({boardAttibs: {boundingbox: [arr[0], 100, arr[1], -100]}});
+      ventanaY= calcExtremos((x) => funRac.Evalua(x), this.state.calculoSympy.rder1); 
+      this.setState({
+        inicio: false,
+        grafica: GraficaNueva,
+        boardAttribs: {boundingbox: [arr[0], ventanaY[1]*1.1, arr[1], ventanaY[0]*1.1]}, 
+        param: { func: (x) => funRac.Evalua(x),
+                  funcAnt: this.state.param.funcAnt,
+                  raicesAnt: this.state.param.raicesAnt,
+                }  
+      });
     });
   }
 
@@ -132,41 +186,42 @@ class Cuerpo extends React.Component {
     this.setState({ show: false });
   }
 
+  datosAcordeon(elem) {
+    const copiaElem= elem.slice(0);
+    if (this.state.calculoSympy.hasOwnProperty('rfun'))
+      {
+        copiaElem[0].contenido= ArrNumToString( this.state.calculoSympy.rfun, 3);
+        copiaElem[0].expanded= true;
+      }
+    return copiaElem;
+  }
+
   render() {
+    //let dato=this.context;
     return (
       <Container fluid>
+        <MsgModal
+              show={this.state.show}
+              mensaje={this.state.mensaje}
+              onClose={this.handleClose}
+        />
         <Row>
-          <Col sm={4}>
+          <Col sm={3}>
             <CajaMath
               latex={this.state.latexFun}
               onClick={this.handleClick}
               onChange={this.handleChange}
             />
-            <Modal
-              show={this.state.show}
-              onHide={this.handleClose}
-              backdrop="static"
-              animation={true}
-            >
-              <Modal.Header className="bg-danger" closeButton>
-                <Modal.Title>Expresión errónea </Modal.Title>
-              </Modal.Header>
-              <Modal.Body>{this.state.mensaje}</Modal.Body>
-              <Modal.Footer>
-                <Button variant="danger" onClick={this.handleClose}>
-                  Cerrar
-                </Button>
-              </Modal.Footer>
-            </Modal>
+            <Acordeon esconde={this.state.inicio} items={this.datosAcordeon(elem)} onChange={this.handleChangeAc }/>
           </Col>
           <Col sm={{ order: "last" }}>
             <JXGBoard
-              logic={Grafica}
-              boardAttributes={ this.state.boardAttibs}
-              param={{ func: this.state.funjs }}
+              logic={this.state.grafica}
+              boardAttributes={this.state.boardAttribs}
+              param={this.state.param}
               style={{
                 width: "maxContent",
-                height: "50em",
+                height: "45em",
                 border: "3px solid green",
                 borderRadius: "8px",
               }}
@@ -178,4 +233,6 @@ class Cuerpo extends React.Component {
   }
 }
 
+
+//export {DatoContexto};
 export default Cuerpo;

@@ -1,0 +1,108 @@
+.contenedor {
+  max-width: 600px;
+  margin: 1rem auto 1rem;
+  padding: 0 10px;
+}
+
+.cajaAc {
+  margin-top: 0px;
+  margin-bottom: 0px;
+  padding-top: 0px;
+  padding-bottom: 0px;
+}
+.acordeon {
+  background-color: rgb(223, 241, 241);
+  margin: 2px auto 2px;
+  border: 1px solid rgba(1, 44, 46, 0.1);
+  padding-inline-start: 2px;
+  border-radius: 2px;
+  list-style: none ;
+  visibility: visible;
+}
+
+.acordeon.esconde {
+  list-style: none;
+  visibility: hidden;
+}
+
+.acordeon_item {
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  list-style: none;
+}
+
+/* activate toggle 
+.acordeon_item.activo .acordeon_button {
+  background-color: #105057;
+}
+*/
+.acordeon_button {
+  background-color: #f4f4f4;
+  color: #444;
+  cursor: pointer;
+  padding: 3px;
+  width: 100%;
+  text-align: left;
+  border: none;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.acordeon_button:hover {
+  color: aqua;
+  background-color: rgb(6, 58, 58);
+}
+
+.acordeon_button::after {
+  display: inline-block;
+  content: '';
+  height: 10px;
+  width: 10px;
+  margin-left: 12px;
+  border-bottom: 2px solid currentColor;
+  border-right: 2px solid currentColor;
+  transform: rotate(-45deg);
+}
+
+.acordeon_button[aria-expanded='true']::after {
+    transform: rotate(45deg);
+}
+
+
+.control {
+  font-size: 40px;
+}
+
+.contenido {
+  margin-top: 0px;
+  margin-bottom: 0px;
+  background-color: rgb(223, 241, 241);
+  padding: 3px 1px 3px 1px;
+}
+
+.caja_contenido {
+  margin-top: 0px;
+  margin-bottom: 0px;
+  height: 0px;
+  overflow: hidden;
+  animation: fadein 1s ease-in;
+}
+
+/*
+transition: height ease-in 0.2s;
+animation: fadein s ease-in;
+*/
+
+@keyframes fadein {
+  0% {
+      opacity: 0;
+  }
+
+  100% {
+      opacity: 1;
+      
+  }
+}
